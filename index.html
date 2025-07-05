@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการผลการเรียน</title>
+    <!-- Favicon Added -->
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/FKvMVwQz/image.png">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Prompt', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #e53e3e 0%, #718096 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4); }
+        .btn-success { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+        .btn-warning { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+        .btn-danger { background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); }
+        .status-uploaded { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); }
+        .status-pending { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo-shadow { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1)); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- The rest of the HTML body is unchanged -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="logo-shadow">
+                        <img src="https://i.postimg.cc/FKvMVwQz/image.png" alt="โลโก้โรงเรียน" class="w-16 h-16 object-contain">
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold">โรงเรียนบ้านโคกประดู่</h1>
+                        <p class="text-blue-100 text-sm">ระบบจัดการผลการเรียน</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <button onclick="showAdminPanel()" class="btn-primary px-4 py-2 rounded-lg text-white font-medium">
+                        <i class="fas fa-cog mr-2"></i>จัดการระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex space-x-6">
+                    <button onclick="showDashboard()" class="nav-btn text-purple-600 font-medium hover:text-purple-800 transition-colors">
+                        <i class="fas fa-home mr-2"></i>หน้าหลัก
+                    </button>
+                    <button onclick="showReports()" class="nav-btn text-blue-600 font-medium hover:text-blue-800 transition-colors">
+                        <i class="fas fa-download mr-2"></i>โปรแกรม ปพ.5
+                    </button>
+                </div>
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-gray-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="dashboard" class="animate-fade-in">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
+                        <i class="fas fa-calendar-alt text-purple-600 mr-3"></i>เลือกปีการศึกษา
+                    </h2>
+                    <div class="flex items-center space-x-4">
+                        <select id="academicYear" onchange="renderDashboard()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </select>
+                        <button onclick="renderDashboard()" class="btn-primary px-6 py-2 rounded-lg text-white font-medium">
+                             <i class="fas fa-sync-alt mr-2"></i>โหลดข้อมูล
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="classGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </div>
+        
+        <div id="reports" class="hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-download text-blue-600 mr-3"></i>โปรแกรม ปพ.5
+                </h2>
+                <div class="text-center py-12">
+                    <div class="mb-8">
+                         <i class="fas fa-file-download text-6xl text-blue-500 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">ดาวน์โหลดโปรแกรม</h3>
+                        <p class="text-gray-600 mb-6">โปรแกรมสำหรับจัดทำและจัดการไฟล์ ปพ.5</p>
+                    </div>
+                     <button onclick="downloadProgram()" class="btn-primary px-8 py-4 rounded-lg text-white font-medium text-lg card-hover">
+                        <i class="fas fa-download mr-3"></i>ดาวน์โหลดโปรแกรม ปพ.5
+                    </button>
+                </div>
+            </div>
+       </div>
+
+        <div id="adminPanel" class="hidden animate-fade-in">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-cogs text-red-600 mr-3"></i>จัดการระบบ
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="text-lg font-semibold mb-4">จัดการปีการศึกษาและชั้นเรียน</h3>
+                        <p class="text-sm text-gray-600 mb-4">เมื่อเพิ่มปีการศึกษาใหม่ ระบบจะสร้างชั้นเรียนมาตรฐาน (อ.1 - ป.6) สำหรับปีนั้นให้โดยอัตโนมัติ</p>
+                        <div class="space-y-3">
+                             <input type="text" id="newAcademicYear" placeholder="ปีการศึกษาใหม่ (เช่น 2568)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <button onclick="addAcademicYear()" class="w-full btn-primary py-2 rounded-lg text-white font-medium">
+                                <i class="fas fa-plus mr-2"></i>เพิ่มปีการศึกษาและสร้างชั้นเรียน
+                            </button>
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4 flex flex-col justify-center items-center">
+                        <i class="fas fa-info-circle text-3xl text-blue-500 mb-3"></i>
+                        <h3 class="text-lg font-semibold mb-2">ข้อมูลระบบ</h3>
+                        <p class="text-center text-sm text-gray-600">การจัดการชั้นเรียนจะผูกกับปีการศึกษาโดยตรง ไม่จำเป็นต้องเพิ่มชั้นเรียนด้วยตนเอง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-300">พัฒนาโดย นายจิรายุทธ แสงสิน</p>
+        </div>
+    </footer>
+
+    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl p-6 m-4 max-w-md w-full">
+            <h3 class="text-xl font-bold mb-4">อัพโหลดไฟล์ ปพ.5</h3>
+             <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600 mb-4">เลือกไฟล์ Excel หรือลากไฟล์มาวางที่นี่</p>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
+                <button onclick="document.getElementById('fileInput').click()" class="btn-primary px-4 py-2 rounded-lg text-white">
+                     เลือกไฟล์
+                </button>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeUploadModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">ยกเลิก</button>
+                <button onclick="uploadFile()" class="btn-success px-4 py-2 rounded-lg text-white">อัพโหลด</button>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        // =================== CONFIGURATION ===================
+        // !!! สำคัญ !!!
+        // นำ URL ของ Web App ที่ได้จากการ Deploy `Code.gs` มาวางที่นี่
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUbJXdKTnDMw0rUwikV2DfCmNOgrXyXGPJCyOhxse0xKtjf56Gpk2j4sOWrlGE2uyL/exec";
+        // !!! สำคัญ !!!
+
+        // =================== Global Variables ===================
+        let allData = { classes: [], grades: [], academic_years: [] };
+        const STANDARD_CLASSES = ['อนุบาล 1', 'อนุบาล 2', 'อนุบาล 3', 'ประถมศึกษาปีที่ 1', 'ประถมศึกษาปีที่ 2', 'ประถมศึกษาปีที่ 3', 'ประถมศึกษาปีที่ 4', 'ประถมศึกษาปีที่ 5', 'ประถมศึกษาปีที่ 6'];
+        let currentAcademicYear = new Date().getFullYear() + 543;
+
+        // =================== Initializer ===================
+        document.addEventListener('DOMContentLoaded', function() {
+            if (GOOGLE_SCRIPT_URL === "YOUR_WEB_APP_URL_HERE") {
+                return showApiUrlError();
+            }
+            showLoading('กำลังโหลดข้อมูลเริ่มต้น...');
+            fetch(`${GOOGLE_SCRIPT_URL}?action=loadAllData`)
+                .then(response => response.json())
+                .then(onDataLoaded)
+                .catch(onFailure);
+        });
+
+        function onDataLoaded(response) {
+            if (!response.success) {
+                return onFailure({ message: response.message || 'Failed to load data from server.' });
+            }
+            
+            allData = response.data;
+            
+            const yearSelect = document.getElementById('academicYear');
+            yearSelect.innerHTML = '';
+            
+            const years = allData.academic_years.map(y => y.year).sort((a, b) => b - a);
+            if (years.length === 0) {
+                const defaultYear = new Date().getFullYear() + 543;
+                years.push(defaultYear); 
+                if (!allData.academic_years.some(y => y.year == defaultYear)) {
+                    allData.academic_years.push({ year: defaultYear });
+                }
+            }
+
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+            
+            currentAcademicYear = years[0] || (new Date().getFullYear() + 543);
+            yearSelect.value = currentAcademicYear;
+
+            renderDashboard();
+            Swal.close();
+        }
+
+        async function postToAction(action, payload) {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, payload })
+                });
+                
+                if (response.type === 'opaque' || response.redirected) {
+                    return { success: true }; 
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok, status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message || 'API returned an error.');
+                }
+                return result;
+
+            } catch (error) {
+                console.error(`Error in postToAction (${action}):`, error);
+                onFailure(error);
+                // Return a failure object to stop further processing
+                return { success: false, message: error.message };
+            }
+        }
+
+        async function saveDataToServer(callback) {
+            showLoading('กำลังบันทึกข้อมูล...');
+            const result = await postToAction('saveData', allData);
+            Swal.close();
+            if (result.success) {
+                console.log('บันทึกข้อมูลสำเร็จ');
+                if (callback) callback(result);
+            }
+        }
+
+        // =================== Render Functions (Unchanged) ===================
+        function renderDashboard() {
+            currentAcademicYear = document.getElementById('academicYear').value;
+            const classGrid = document.getElementById('classGrid');
+            classGrid.innerHTML = '';
+
+            const classesForYear = allData.classes.filter(c => c.academicYear == currentAcademicYear);
+            
+            if (classesForYear.length === 0) {
+                classGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full">ไม่พบข้อมูลชั้นเรียนสำหรับปีการศึกษา ${currentAcademicYear} <br>กรุณาไปที่ 'จัดการระบบ' เพื่อเพิ่มปีการศึกษาและสร้างชั้นเรียน</p>`;
+                return;
+            }
+
+            classesForYear.forEach(classItem => {
+                const classCard = createClassCard(classItem);
+                classGrid.appendChild(classCard);
+            });
+        }
+        
+        function createClassCard(classItem) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-lg p-6 card-hover';
+            
+            const hasFile = classItem.fileUrl && classItem.fileUrl.startsWith('http');
+
+            const statusClass = hasFile ? 'status-uploaded' : 'status-pending';
+            const statusText = hasFile ? 'ส่งไฟล์ ปพ.5 แล้ว' : 'ยังไม่ส่งไฟล์ ปพ.5';
+            const statusIcon = hasFile ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">${classItem.name}</h3>
+                    <div class="${statusClass} px-3 py-1 rounded-full text-white text-sm font-medium">
+                        <i class="${statusIcon} mr-1"></i>${statusText}
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2 mt-4">  ${!hasFile ? `
+                        <button onclick="showUploadModal('${classItem.id}')" class="flex-1 btn-primary py-2 rounded-lg text-white font-medium text-sm">
+                            <i class="fas fa-upload mr-1"></i>อัพโหลด
+                        </button>
+                    ` : ''}
+                    <button ${!hasFile ? 'disabled' : ''} onclick="downloadFile('${classItem.fileUrl}')" class="flex-1 btn-success py-2 rounded-lg text-white font-medium text-sm ${!hasFile ? 'opacity-50 cursor-not-allowed' : ''}">
+                        <i class="fas fa-download mr-1"></i>ดาวน์โหลด
+                    </button>
+                    <button onclick="viewClass('${classItem.id}')" class="flex-1 btn-warning py-2 rounded-lg text-white font-medium text-sm">
+                        <i class="fas fa-eye mr-1"></i>ดูรายละเอียด
+                    </button>
+                </div>`;
+            return card;
+        }
+
+        // =================== UI Functions (Unchanged) ===================
+        function showDashboard() {
+            hideAllSections();
+            document.getElementById('dashboard').classList.remove('hidden');
+            renderDashboard();
+        }
+
+        function showReports() {
+            hideAllSections();
+            document.getElementById('reports').classList.remove('hidden');
+        }
+
+        function showAdminPanel() {
+            Swal.fire({
+                title: 'เข้าสู่ระบบจัดการ',
+                html: `<input id="adminUsername" class="swal2-input" placeholder="ชื่อผู้ใช้" type="text"><input id="adminPassword" class="swal2-input" placeholder="รหัสผ่าน" type="password">`,
+                showCancelButton: true,
+                confirmButtonText: 'เข้าสู่ระบบ',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const username = document.getElementById('adminUsername').value;
+                    const password = document.getElementById('adminPassword').value;
+                    if (username !== 'admin' || password !== 'pass123') {
+                        Swal.showValidationMessage('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+                        return false;
+                    }
+                    return true;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1500, showConfirmButton: false });
+                    hideAllSections();
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                }
+            });
+        }
+        
+        function hideAllSections() {
+            ['dashboard', 'reports', 'adminPanel'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
+
+        function showLoading(title) {
+            Swal.fire({ title, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        }
+
+
+        function onFailure(error) {
+            console.error("An error occurred:", error);
+            Swal.fire('เกิดข้อผิดพลาด', error.message || 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+        }
+
+        function showApiUrlError() {
+            showLoading(false);
+            Swal.fire({
+                icon: 'error',
+                title: 'การตั้งค่าไม่สมบูรณ์',
+                text: 'กรุณาตั้งค่า GOOGLE_SCRIPT_URL ในไฟล์ index.html ก่อน',
+                allowOutsideClick: false,
+            });
+        }
+        
+        // =================== File Handling ===================
+        function showUploadModal(classId) {
+            document.getElementById('uploadModal').classList.remove('hidden');
+            document.getElementById('uploadModal').setAttribute('data-class-id', classId);
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+
+        function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const classId = document.getElementById('uploadModal').getAttribute('data-class-id');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                return Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกไฟล์', 'error');
+            }
+            
+            showLoading('กำลังอัพโหลดไฟล์...');
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const fileObject = {
+                    base64Data: event.target.result,
+                    fileName: file.name,
+                    mimeType: file.type
+                };
+
+                const result = await postToAction('uploadFile', fileObject);
+                if (result.success) {
+                    const classIndex = allData.classes.findIndex(c => c.id == classId);
+                    if (classIndex !== -1) {
+                        allData.classes[classIndex].fileUrl = result.fileUrl;
+                        allData.classes[classIndex].fileName = file.name;
+                        saveDataToServer(() => {
+                            Swal.fire('สำเร็จ', 'อัพโหลดไฟล์เรียบร้อยแล้ว', 'success');
+                            closeUploadModal();
+                            renderDashboard();
+                        });
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function downloadFile(fileUrl) {
+            if (fileUrl && fileUrl.startsWith('http')) {
+                window.open(fileUrl, '_blank');
+            } else {
+                 Swal.fire('ไม่มีไฟล์', 'ไม่พบไฟล์สำหรับดาวน์โหลด', 'warning');
+            }
+        }
+        
+        function downloadProgram() {
+            const downloadUrl = 'https://drive.google.com/uc?export=download&id=1Vv1Q1Su1cVEpu4Pn1fY-W3k-4FGK-j4C';
+            window.open(downloadUrl, '_blank');
+        }
+
+        // =================== Admin Functions ===================
+        function addAcademicYear() {
+            const newYearInput = document.getElementById('newAcademicYear');
+            const newYear = newYearInput.value;
+
+            if (!newYear || isNaN(newYear)) {
+                return Swal.fire('ข้อผิดพลาด', 'กรุณาใส่ปีการศึกษาเป็นตัวเลข', 'error');
+            }
+            if (allData.academic_years.some(y => y.year == newYear)) {
+                return Swal.fire('ข้อมูลซ้ำ', `ปีการศึกษา ${newYear} มีอยู่แล้ว`, 'warning');
+            }
+            
+            allData.academic_years.push({ year: newYear });
+            
+            STANDARD_CLASSES.forEach(className => {
+                allData.classes.push({
+                    id: 'class_' + newYear + '_' + className.replace(/\s/g, ''),
+                    name: className,
+                    academicYear: newYear,
+                    fileUrl: '',
+                    fileName: ''
+                });
+            });
+
+            saveDataToServer(() => {
+                Swal.fire('สำเร็จ', `เพิ่มปีการศึกษา ${newYear} และสร้างชั้นเรียนมาตรฐานเรียบร้อยแล้ว`, 'success');
+                newYearInput.value = '';
+                // Manually update the UI to reflect the new state without a full reload
+                onDataLoaded({ success: true, data: allData }); 
+            });
+        }
+        
+        function viewClass(classId) {
+            const classItem = allData.classes.find(c => c.id === classId);
+
+            if (!classItem) {
+                return Swal.fire('เกิดข้อผิดพลาด', 'ไม่พบข้อมูลชั้นเรียน', 'error');
+            }
+
+            const hasFile = classItem.fileUrl && classItem.fileUrl.startsWith('http');
+
+            if (hasFile) {
+                Swal.fire({
+                    title: '<strong>รายละเอียดไฟล์ ปพ.5</strong>',
+                    icon: 'info',
+                    html: `
+                        <div class="text-left p-2" style="text-align: left;">
+                            <p class="mb-2"><strong><i class="fas fa-file-alt mr-2"></i>ชื่อไฟล์:</strong></p>
+                            <p class="mb-4 ml-4 break-words">${classItem.fileName || 'ไม่มีข้อมูล'}</p>
+                            <p class="mb-2"><strong><i class="fas fa-link mr-2"></i>ลิงก์ดาวน์โหลด:</strong></p>
+                            <p class="ml-4 break-all"><a href="${classItem.fileUrl}" target="_blank" class="text-blue-600 hover:underline">คลิกเพื่อเปิดไฟล์</a></p>
+                        </div>`,
+                    showCloseButton: true,
+                    confirmButtonText: 'ตกลง'
+                });
+            } else {
+                Swal.fire('ไม่พบไฟล์', 'ยังไม่มีการอัพโหลดไฟล์ ปพ.5 สำหรับชั้นเรียนนี้', 'warning');
+            }
+        }
+
+    </script>
+</body>
+</html>
